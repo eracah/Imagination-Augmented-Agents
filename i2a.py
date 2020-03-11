@@ -389,7 +389,7 @@ for i_update in range(args.num_frames):
     
     if i_update % 100 == 0:
         all_rewards.append(final_rewards.mean())
-        all_losses.append(loss.data)
+        all_losses.append(loss.item())
         print("Update {}:".format(i_update))
         print("\t Mean Loss: {}".format(np.mean(all_losses[-10:])))
         print("\t Last 10 Mean Reward: {}".format(np.mean(all_rewards[-10:])))
