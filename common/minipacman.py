@@ -2,7 +2,7 @@ import gym
 from gym import spaces
 
 from common.deepmind import PillEater, observation_as_rgb
-
+import numpy as np
 class MiniPacman:
     def __init__(self, mode, frame_cap):
         self.mode      = mode
@@ -11,7 +11,7 @@ class MiniPacman:
         self.env = PillEater(mode=mode, frame_cap=frame_cap)
         
         self.action_space      = spaces.Discrete(5)
-        self.observation_space = spaces.Box(low=0, high=1.0, shape=(3, 15, 19))
+        self.observation_space = spaces.Box(low=0, high=1.0, shape=(3, 15, 19), dtype=np.float32)
 
     def step(self, action):
         self.env.step(action)
