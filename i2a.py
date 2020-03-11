@@ -341,7 +341,7 @@ for i_update in range(args.num_frames):
 
         reward = torch.FloatTensor(reward).unsqueeze(1)
         episode_rewards += reward
-        masks = torch.FloatTensor(1-np.array(done)).unsqueeze(1).to(device)
+        masks = torch.FloatTensor(1-np.array(done)).unsqueeze(1)
         final_rewards *= masks
         final_rewards += (1-masks) * episode_rewards
         episode_rewards *= masks
