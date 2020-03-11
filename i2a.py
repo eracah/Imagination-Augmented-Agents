@@ -335,6 +335,7 @@ for i_update in range(args.num_frames):
     for step in range(args.num_steps):
 
         current_state = current_state.to(device)
+        print(current_state.device)
         action = actor_critic.act(current_state)
 
         next_state, reward, done, _ = envs.step(action.cpu().data.numpy())
