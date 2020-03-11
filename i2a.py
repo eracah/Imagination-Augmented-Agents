@@ -190,7 +190,6 @@ class I2A(OnPolicy):
         
     def forward(self, state):
         batch_size = state.size(0)
-        
         imagined_state, imagined_reward = self.imagination(state)
         hidden = self.encoder(imagined_state, imagined_reward)
         hidden = hidden.view(batch_size, -1)
@@ -218,8 +217,9 @@ class I2A(OnPolicy):
 # In[9]:
 
 
-class ImaginationCore(object):
+class ImaginationCore(nn.Module):
     def __init__(self, num_rolouts, in_shape, num_actions, num_rewards, env_model, distil_policy, full_rollout=True):
+        super().__init__()
         self.num_rolouts  = num_rolouts
         self.in_shape      = in_shape
         self.num_actions   = num_actions
@@ -228,8 +228,8 @@ class ImaginationCore(object):
         self.distil_policy = distil_policy
         self.full_rollout  = full_rollout
         
-    def __call__(self, state):
-        state      = state.cpu()
+    def forward(self, state):
+        #state      = state.cpu()
         batch_size = state.size(0)
 
         rollout_states  = []
@@ -242,7 +242,7 @@ class ImaginationCore(object):
             rollout_batch_size = batch_size * self.num_actions
         else:
             action = self.distil_policy.act(state)
-            action = action.data.cpu()
+            action = action.detach()
             rollout_batch_size = batch_size
 
         for step in range(self.num_rolouts):
@@ -252,14 +252,14 @@ class ImaginationCore(object):
 
             imagined_state, imagined_reward = self.env_model(inputs)
 
-            imagined_state  = F.softmax(imagined_state, dim=1).max(1)[1].data.cpu()
-            imagined_reward = F.softmax(imagined_reward, dim=1).max(1)[1].data.cpu()
+            imagined_state  = F.softmax(imagined_state, dim=1).max(1)[1]
+            imagined_reward = F.softmax(imagined_reward, dim=1).max(1)[1]
 
-            imagined_state = target_to_pix(imagined_state.numpy())
+            imagined_state = target_to_pix(imagined_state.detach().numpy())
             imagined_state = torch.FloatTensor(imagined_state).view(rollout_batch_size, *self.in_shape)
 
             onehot_reward = torch.zeros(rollout_batch_size, self.num_rewards)
-            onehot_reward[range(rollout_batch_size), imagined_reward] = 1
+            onehot_reward[range(rollout_batch_size), imagined_reward.detach().numpy()] = 1
 
             rollout_states.append(imagined_state.unsqueeze(0))
             rollout_rewards.append(onehot_reward.unsqueeze(0))
@@ -394,15 +394,15 @@ for i_update in range(args.num_frames):
         print("\t Mean Loss: {}".format(np.mean(all_losses[-10:])))
         print("\t Last 10 Mean Reward: {}".format(np.mean(all_rewards[-10:])))
         wandb.log({"Mean Reward":np.mean(all_rewards[-10:])})
-        clear_output(True)
-        plt.figure(figsize=(20,5))
-        plt.subplot(131)
-        plt.title('epoch %s. reward: %s' % (i_update, np.mean(all_rewards[-10:])))
-        plt.plot(all_rewards)
-        plt.subplot(132)
-        plt.title('loss %s' % all_losses[-1])
-        plt.plot(all_losses)
-        plt.show()
+        # clear_output(True)
+        # plt.figure(figsize=(20,5))
+        # plt.subplot(131)
+        # plt.title('epoch %s. reward: %s' % (i_update, np.mean(all_rewards[-10:])))
+        # plt.plot(all_rewards)
+        # plt.subplot(132)
+        # plt.title('loss %s' % all_losses[-1])
+        # plt.plot(all_losses)
+        # plt.show()
         
     rollout.after_update()
 
