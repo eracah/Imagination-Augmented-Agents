@@ -266,7 +266,7 @@ class ImaginationCore(nn.Module):
 
             state  = imagined_state.to(device)
             action = self.distil_policy.act(state)
-            action = action.detach().numpy()
+            action = action.detach()
         
         return torch.cat(rollout_states), torch.cat(rollout_rewards)
 
