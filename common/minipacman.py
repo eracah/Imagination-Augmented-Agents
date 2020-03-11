@@ -1,7 +1,7 @@
 import gym
 from gym import spaces
 
-from deepmind import PillEater, observation_as_rgb
+from common.deepmind import PillEater, observation_as_rgb
 
 class MiniPacman:
     def __init__(self, mode, frame_cap):

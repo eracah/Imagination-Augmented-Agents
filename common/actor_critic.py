@@ -14,20 +14,20 @@ class OnPolicy(nn.Module):
         
     def act(self, x, deterministic=False):
         logit, value = self.forward(x)
-        probs = F.softmax(logit)
+        probs = F.softmax(logit,dim=1)
         
         if deterministic:
             action = probs.max(1)[1]
         else:
-            action = probs.multinomial()
+            action = probs.multinomial(num_samples=1).squeeze()
         
         return action
     
     def evaluate_actions(self, x, action):
         logit, value = self.forward(x)
         
-        probs     = F.softmax(logit)
-        log_probs = F.log_softmax(logit)
+        probs     = F.softmax(logit, dim=1)
+        log_probs = F.log_softmax(logit,dim=1)
         
         action_log_probs = log_probs.gather(1, action)
         entropy = -(probs * log_probs).sum(1).mean()
@@ -69,25 +69,19 @@ class ActorCritic(OnPolicy):
     
     
 class RolloutStorage(object):
-    def __init__(self, num_steps, num_envs, state_shape):
+    def __init__(self, num_steps, num_envs, state_shape, device):
+        self.device = device
         self.num_steps = num_steps
         self.num_envs  = num_envs
-        self.states  = torch.zeros(num_steps + 1, num_envs, *state_shape)
-        self.rewards = torch.zeros(num_steps,     num_envs, 1)
-        self.masks   = torch.ones(num_steps  + 1, num_envs, 1)
-        self.actions = torch.zeros(num_steps,     num_envs, 1).long()
+        self.states  = torch.zeros(num_steps + 1, num_envs, *state_shape).to(self.device)
+        self.rewards = torch.zeros(num_steps,     num_envs, 1).to(self.device)
+        self.masks   = torch.ones(num_steps  + 1, num_envs, 1).to(self.device)
+        self.actions = torch.zeros(num_steps,     num_envs, 1).long().to(self.device)
         self.use_cuda = False
-            
-    def cuda(self):
-        self.use_cuda  = True
-        self.states    = self.states.cuda()
-        self.rewards   = self.rewards.cuda()
-        self.masks     = self.masks.cuda()
-        self.actions   = self.actions.cuda()
         
     def insert(self, step, state, action, reward, mask):
         self.states[step + 1].copy_(state)
-        self.actions[step].copy_(action)
+        self.actions[step].copy_(action.unsqueeze(-1))
         self.rewards[step].copy_(reward)
         self.masks[step + 1].copy_(mask)
         
@@ -96,9 +90,7 @@ class RolloutStorage(object):
         self.masks[0].copy_(self.masks[-1])
         
     def compute_returns(self, next_value, gamma):
-        returns   = torch.zeros(self.num_steps + 1, self.num_envs, 1)
-        if self.use_cuda:
-            returns = returns.cuda()
+        returns   = torch.zeros(self.num_steps + 1, self.num_envs, 1).to(self.device)
         returns[-1] = next_value
         for step in reversed(range(self.num_steps)):
             returns[step] = returns[step + 1] * gamma * self.masks[step + 1] + self.rewards[step]
