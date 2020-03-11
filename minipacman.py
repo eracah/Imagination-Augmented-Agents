@@ -13,7 +13,7 @@ from minipacman import MiniPacman
 
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+
 
 
 # In[3]:
