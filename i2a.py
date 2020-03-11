@@ -256,7 +256,7 @@ class ImaginationCore(nn.Module):
             imagined_reward = F.softmax(imagined_reward, dim=1).max(1)[1]
 
             imagined_state = target_to_pix(imagined_state.detach().cpu().numpy())
-            imagined_state = torch.FloatTensor(imagined_state).view(rollout_batch_size, *self.in_shape)
+            imagined_state = torch.FloatTensor(imagined_state).view(rollout_batch_size, *self.in_shape).to(device)
 
             onehot_reward = torch.zeros(rollout_batch_size, self.num_rewards)
             onehot_reward[range(rollout_batch_size), imagined_reward.detach().cpu().numpy()] = 1
@@ -268,7 +268,7 @@ class ImaginationCore(nn.Module):
             action = self.distil_policy.act(state)
             action = action.detach()
         
-        return torch.cat(rollout_states), torch.cat(rollout_rewards)
+        return torch.cat(rollout_states).to(device), torch.cat(rollout_rewards).to(device)
 
 
 # <h3>Full Rollout</h3>
