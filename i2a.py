@@ -264,7 +264,7 @@ class ImaginationCore(nn.Module):
             rollout_states.append(imagined_state.unsqueeze(0))
             rollout_rewards.append(onehot_reward.unsqueeze(0))
 
-            state  = imagined_state
+            state  = imagined_state.to(device)
             action = self.distil_policy.act(state)
             action = action.detach().numpy()
         
