@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 from collections import namedtuple
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(device)
 
 args = SimpleNamespace(mode = "regular",
 num_envs = 16,
@@ -192,10 +191,11 @@ class I2A(OnPolicy):
     def forward(self, state):
         batch_size = state.size(0)
         
-        imagined_state, imagined_reward = self.imagination(state.data)
+        imagined_state, imagined_reward = self.imagination(state)
         hidden = self.encoder(imagined_state, imagined_reward)
         hidden = hidden.view(batch_size, -1)
-        
+
+
         state = self.features(state)
         state = state.view(state.size(0), -1)
         
@@ -295,7 +295,7 @@ distil_optimizer = optim.Adam(distil_policy.parameters())
 
 imagination = ImaginationCore(1, state_shape, num_actions, num_rewards, env_model, distil_policy, full_rollout=args.full_rollout)
 
-actor_critic = I2A(state_shape, num_actions, num_rewards, 256, imagination, full_rollout=args.full_rollout)
+actor_critic = I2A(state_shape, num_actions, num_rewards, 256, imagination, full_rollout=args.full_rollout).to(device)
 #rmsprop hyperparams:
 optimizer = optim.RMSprop(actor_critic.parameters(), args.lr, eps=args.eps, alpha=args.alpha)
 
@@ -335,7 +335,6 @@ for i_update in range(args.num_frames):
     for step in range(args.num_steps):
 
         current_state = current_state.to(device)
-        print(current_state.device)
         action = actor_critic.act(current_state)
 
         next_state, reward, done, _ = envs.step(action.cpu().data.numpy())
