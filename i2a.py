@@ -247,7 +247,7 @@ class ImaginationCore(object):
         for step in range(self.num_rolouts):
             onehot_action = torch.zeros(rollout_batch_size, self.num_actions, *self.in_shape[1:])
             onehot_action[range(rollout_batch_size), action] = 1
-            inputs = torch.cat([state, onehot_action], 1)
+            inputs = torch.cat([state, onehot_action], 1).to(device)
 
             imagined_state, imagined_reward = self.env_model(inputs)
 
