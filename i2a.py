@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 from collections import namedtuple
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
 
 args = SimpleNamespace(mode = "regular",
 num_envs = 16,
