@@ -246,7 +246,7 @@ class ImaginationCore(nn.Module):
             rollout_batch_size = batch_size
 
         for step in range(self.num_rolouts):
-            onehot_action = torch.zeros(rollout_batch_size, self.num_actions, *self.in_shape[1:])
+            onehot_action = torch.zeros(rollout_batch_size, self.num_actions, *self.in_shape[1:]).to(device)
             onehot_action[range(rollout_batch_size), action] = 1
             inputs = torch.cat([state, onehot_action], 1).to(device)
 
@@ -266,7 +266,7 @@ class ImaginationCore(nn.Module):
 
             state  = imagined_state
             action = self.distil_policy.act(state)
-            action = action.data.cpu()
+            action = action.detach().cpu()
         
         return torch.cat(rollout_states), torch.cat(rollout_rewards)
 
@@ -337,7 +337,7 @@ for i_update in range(args.num_frames):
         current_state = current_state.to(device)
         action = actor_critic.act(current_state)
 
-        next_state, reward, done, _ = envs.step(action.cpu().data.numpy())
+        next_state, reward, done, _ = envs.step(action.detach().cpu().numpy())
 
         reward = torch.FloatTensor(reward).unsqueeze(1)
         episode_rewards += reward
